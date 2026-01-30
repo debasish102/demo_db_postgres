@@ -1,0 +1,37 @@
+name: Deploy PostgreSQL Functions
+
+on:
+  push:
+    branches:
+      - main   # ONLY main deploys to prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get install postgresql-client -y
+
+      - name: Deploy table to production
+        env:
+          DB_HOST: "98.92.35.195"
+          DB_PORT: "5432"
+          DB_NAME: "test_db"
+          DB_USER: "postgres"
+          DB_PASSWORD: "Test123"
+        run: |
+          export PGPASSWORD=$DB_PASSWORD
+          for file in migration/*.sql; do
+            echo "Running $file"
+            psql \
+              -h $DB_HOST \
+              -p $DB_PORT \
+              -U $DB_USER \
+              -d $DB_NAME \
+              -v ON_ERROR_STOP=1 \
+              -f "$file"
+          done
